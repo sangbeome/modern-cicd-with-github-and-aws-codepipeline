@@ -8,7 +8,10 @@ phases:
   build:
     commands:
       - |
-        if [[ "$BRANCH_NAME" == main* ]]; then
+        if [[ -z "$BRANCH_NAME" ]]; then
+          echo "BRANCH_NAME not set, defaulting to stage"
+          DEPLOY_ENV="stage";
+        elif [[ "$BRANCH_NAME" == main* ]]; then
           DEPLOY_ENV="stage";
         elif [[ "$BRANCH_NAME" == feature* ]]; then
           DEPLOY_ENV="dev";
@@ -16,6 +19,7 @@ phases:
           echo "Error: BRANCH_NAME must start with 'main' or 'feature'."
           exit 1;
         fi
+        echo "Deploying to environment: $DEPLOY_ENV"
       - aws cloudformation deploy --template-file backend.yml --stack-name BaseInfraStack-$DEPLOY_ENV --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM --parameter-overrides Environment=$DEPLOY_ENV --no-fail-on-empty-changeset
       - aws cloudformation wait stack-create-complete --stack-name BaseInfraStack-$DEPLOY_ENV
 
