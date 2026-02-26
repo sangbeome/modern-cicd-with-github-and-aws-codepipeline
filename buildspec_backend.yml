@@ -21,7 +21,14 @@ phases:
         fi
         echo "Deploying to environment: $DEPLOY_ENV"
         aws cloudformation deploy --template-file backend.yml --stack-name BaseInfraStack-$DEPLOY_ENV --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM --parameter-overrides Environment=$DEPLOY_ENV --no-fail-on-empty-changeset
-        aws cloudformation wait stack-create-complete --stack-name BaseInfraStack-$DEPLOY_ENV
+        
+        # Wait for stack to stabilize (works for both create and update)
+        STACK_STATUS=$(aws cloudformation describe-stacks --stack-name BaseInfraStack-$DEPLOY_ENV --query 'Stacks[0].StackStatus' --output text 2>/dev/null || echo "NOT_FOUND")
+        if [[ "$STACK_STATUS" == *"IN_PROGRESS"* ]]; then
+          echo "Waiting for stack operation to complete..."
+          aws cloudformation wait stack-update-complete --stack-name BaseInfraStack-$DEPLOY_ENV 2>/dev/null || \
+          aws cloudformation wait stack-create-complete --stack-name BaseInfraStack-$DEPLOY_ENV 2>/dev/null || true
+        fi
 
   post_build:
     commands:
