@@ -1,0 +1,19 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      java: corretto17
+  build:
+    commands:
+      - echo "Building Java application..."
+      - mvn clean package -q
+      - echo "Build completed!"
+  post_build:
+    commands:
+      - echo "Running the application..."
+      - java -jar target/hello-app-1.0.0.jar
+
+artifacts:
+  files:
+    - target/hello-app-1.0.0.jar
